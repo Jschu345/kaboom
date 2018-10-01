@@ -13,6 +13,14 @@ def resetScreen():
     DISPLAYSURF.fill((120,80,80))
     pygame.draw.rect(DISPLAYSURF,(0,0,255), (0,0,WIDTH, SKY_HEIGHT))
 
+
+class Image:
+    def __init__(self, pygImg, hitbox, size):
+        self.img = pygImg
+        self.hitbox = hitbox
+        self.size = size
+
+
 #initialize bomber
 class Bomber:
     img = pygame.image.load("img/bomber.png")
@@ -29,7 +37,7 @@ class Bomber:
             self.lastDrop = pygame.time.get_ticks()
     def posn(self):
         return (self.x, self.y)
-        
+
     def reset(self):
         del self.bombs[:]
         self.bombs=[]
@@ -45,18 +53,18 @@ class Bomber:
             self.x = self.x - self.step
         toDelete = []
         for index, bomb in enumerate(self.bombs):
-            print(len(self.bombs)) 
+            print(len(self.bombs))
             if bomb.move() == "del":
                 toDelete.append(index)
         for ind in toDelete:
             del self.bombs[ind]
-        
+
     def showOn(self, surf):
         surf.blit(self.img, self.posn())
         for bomb in self.bombs:
             bomb.showOn(surf)
 
-bomber = Bomber() 
+bomber = Bomber()
 
 #bucket initialization
 class Bucket:
@@ -69,15 +77,15 @@ class Bucket:
         return [self.x - 32, self.y]
     def posn(self):
         return (self.x - 32, self.y)
-    
+
     def move(self):
         self.x, z = pygame.mouse.get_pos()
-    
+
     def showOn(self, surf):
         surf.blit(self.img, self.posn())
 
     def boom(self):
-        
+
         self.boomed = True
 
 bucket = Bucket()
@@ -99,7 +107,7 @@ class Bomb:
             del self
             return "del"
         elif self.y > HEIGHT:
-            #game over   
+            #game over
             bucket.boom()
             return "boom"
     def showOn(self, surf):
@@ -126,7 +134,7 @@ def loseLife():
                 pygame.quit()
                 print("quit")
                 sys.exit()
-    
+
 
 while True: #main loop
     resetScreen()
