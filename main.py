@@ -1,7 +1,11 @@
 import pygame, sys, random
+import time
 from pygame.locals import *
 from constants import *
+
 print("began")
+
+
 
 pygame.init()
 DISPLAYSURF = pygame.display.set_mode(SCREEN_SIZE)
@@ -112,6 +116,7 @@ class Game:
 
     def update(self):
         resetScreen()
+        print(self.level.score())
         self.move_all()
         if self.level.is_going():
             self.drop()
@@ -129,9 +134,6 @@ class Game:
             self.update_screen()
             self.level.level_up()
             self.level.wait_and_start()
-        """else:
-            print(self.bombs)
-            print(self.level.is_going())"""
 
 
     def update_screen(self):
@@ -141,14 +143,19 @@ class Game:
             self.bomber.move(self.level.bomber_step())
         else:
             self.bomber.show()
-        self.bucket.move() 
+        self.bucket.move()
+        to_delete = []
         for index, bomb in enumerate(self.bombs):
             ret = bomb.move(self.level.bomb_step())
             if ret == KABOOM:
                 self.kaboom()
             elif bomb.is_touching(self.bucket):
                 self.level.score_up()
-                del self.bombs[index]
+                to_delete.append(index)
+        for i in to_delete:
+            del self.bombs[i]
+
+            
                 
     def drop(self):
         if self.level.should_drop():
