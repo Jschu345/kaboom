@@ -105,7 +105,7 @@ class Game:
         self.lives = 3
         self.lastDrop = pygame.time.get_ticks()
         self.surf = DISPLAYSURF
-    def moveAll(self):
+    def move_all(self):
         self.bomber.move(self.level.bomber_step)
         self.bucket.move()
         for index, bomb in enumerate(self.bombs):
@@ -115,6 +115,9 @@ class Game:
             elif bomb.move(self.level.bomb_step()) == KABOOM:
                 #switch screen, delete bombs, and restart level and lose a bucket
                 self.kaboom()
+    def drop(self):
+        if level.should_drop():
+            bombs.append(Bomb(bomber.get_center()))
     
 
     #add (drop) bomb?
@@ -122,7 +125,7 @@ class Game:
     #levelup
     #lose a life / kaboom? -> restart level
     #move them
-    #check for catches and drops
+    #check for catches and drops // do in Bomb.move()
             
 
     
@@ -185,12 +188,10 @@ bucket = Bucket()
 
 #bombs initialization
 class Bomb:
-    def __init__(self, bomber):
-        self.img = Image(pygame.image.load("img/bomb.png"),[64,64], [17, 22])
-        self.x = bomber.x + self.img.hitbox[0]/2 + bomber.img.hitbox[0]/2
-        self.y = bomber.y + self.img.hitbox[1]/2 + bomber.img.hitbox[1]/2
-    def center(self):
-        return (self.x + (self.img.hitbox[0]/2), self.y + (self.img.hitbox[1]/2))
+    def __init__(self, center)
+        Sprite.__init__(Image(pygame.image.load("img/bomb.png")), [17, 22], [center[0], center[1]] )
+
+        
     def posn(self):
         return (self.x, self.y)
     def posnList(self):
