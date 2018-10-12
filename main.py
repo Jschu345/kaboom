@@ -1,3 +1,6 @@
+#hello there
+#Author: Jackson Schuster
+
 import pygame, sys, random
 from pygame.locals import *
 from constants import *
@@ -24,15 +27,16 @@ class Image:
 #initialize bomber
 
 class Game:
-    score = 0
-    level = 0
-    numIntervals = 7
-    intervals=[500, 450, 400, 350, 300, 250, 200]
-    interval = intervals[0]
-    time = 8000
-    levelStart = pygame.time.get_ticks()
-    go = True
-    bombStep = 3
+    def __init__(self):
+        self.score = 0
+        self.level = 0
+        self.numIntervals = 7
+        self.intervals=[500, 450, 400, 350, 300, 250, 200]
+        self.interval = intervals[0]
+        self.time = 8000
+        self.levelStart = pygame.time.get_ticks()
+        self.go = True
+        self.bombStep = 3
     def levelUp(self):
         self.level = self.level + 1
         self.score = self.score + self.level*50
@@ -43,29 +47,32 @@ class Game:
         if self.level % 2 == 0 and self.level < 12:
             self.bombStep = self.bombStep + 1
     def update(self):
+        resetScreen()
         if (self.levelStart + self.time < pygame.time.get_ticks()):
             bomber.shouldBomb = False
             if len(bomber.bombs) == 0:
                 self.go = False
+        bomber.move()
 
     def startLevel(self):
         self.levelStart = pygame.time.get_ticks()
 
-game = Game()  
+game = Game()
 
 
 
 class Bomber:
-    img = pygame.image.load("img/bomber.png")
-    x = int(WIDTH/2 - 32)
-    y = SKY_HEIGHT - 48
-    nextx = int(random.randrange(32,WIDTH - 32))
-    step = 5
-    bombs = []
-    bombCount = 0
-    lastDrop = pygame.time.get_ticks()
-    dropInterval = 500
-    shouldBomb = True
+    def __init__(self):
+        self.img = pygame.image.load("img/bomber.png")
+        self.x = int(WIDTH/2 - 32)
+        self.y = SKY_HEIGHT - 48
+        self.nextx = int(random.randrange(32,WIDTH - 32))
+        self.step = 5
+        self.bombs = []
+        self.bombCount = 0
+        self.lastDrop = pygame.time.get_ticks()
+        self.dropInterval = 500
+        self.shouldBomb = True
     def dropBomb(self):
         if pygame.time.get_ticks() - self.lastDrop > game.interval and self.shouldBomb:
             self.bombs.append( Bomb(self) )
@@ -115,7 +122,7 @@ class Bucket:
         return (self.x, self.y)
 
     def move(self):
-        ex, z = pygame.mouse.get_pos() 
+        ex, z = pygame.mouse.get_pos()
         self.x = ex
     def showOn(self, surf):
         surf.blit(self.img.img, self.posn())
@@ -132,7 +139,7 @@ class Bomb:
         self.img = Image(pygame.image.load("img/bomb.png"),[64,64], [17, 22])
         self.x = bomber.x + self.img.hitbox[0]/2
         self.y = bomber.y + self.img.hitbox[1]/2
-        
+
     step = game.bombStep
     def posn(self):
         return (self.x, self.y)
@@ -176,8 +183,20 @@ def waitForClick():
                 print("quit")
                 sys.exit()
 
+
+
+
 while True: #main loop
+    game.startLevel()
     while game.go == True:
+        for event in pygame.event.get():
+                if event.type==QUIT:
+                    pygame.quit()
+                    print("quit")
+                    sys.exit()
+        game.update()
+
+    """while game.go == True:
         resetScreen()
         for event in pygame.event.get():
             if event.type==QUIT:
@@ -206,5 +225,5 @@ while True: #main loop
     game.levelUp()
     game.startLevel()
     game.go = True
-    bomber.shouldBomb = True
+    bomber.shouldBomb = True"""
 
