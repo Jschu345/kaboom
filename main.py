@@ -13,6 +13,18 @@ def resetScreen():
     DISPLAYSURF.fill((120,80,80))
     pygame.draw.rect(DISPLAYSURF,(0,0,255), (0,0,WIDTH, SKY_HEIGHT))
 
+def waitForClick():
+    cont = False
+    while cont == False:
+        for event in pygame.event.get():
+            if event.type == MOUSEBUTTONUP:
+                cont = True
+            if event.type==QUIT:
+                pygame.quit()
+                print("quit")
+                sys.exit()
+
+
 
 class Image:
     def __init__(self, pygImg, size, hitbox):
@@ -27,48 +39,60 @@ class Sprite:
         self._x = posn[0]
         self._y = posn[1]
     def posn(self):
-        ##
-        pass
+        return [ self._y self._x ]
     def center_of(self):
-        ##
+        return [ self._x + self._img.hitbox[0]/2, self.y + self._img.hitbox[1]/2 ]
         pass
     def set_posn(self, posn):
-        ##
-        pass
+        self._x = posn[0]
+        self._y = posn[1]
+    def set_center(self, posn):
+        self._x = posn[0] - self._img.hitbox[0]/2
+        self._y = posn[1] - self._img.hitbox[1]/2
     def show(self):
-        ##
-        pass
+        surf.blit(self._img.img, self.posn())
 
 
 #initialize bomber
 
 class Level:
     def __init__(self): #initialize
-        self.level = 1
-        self.bombStep = 3
-        self.bomberStep = 5
-        self.score = 0
-        self.length = 8000
-        self.levelStart = pygame.time.get_ticks()
-        self.dropInterval = 500
-    def levelUp(self): #for use after all bombs are caught
-        self.score = self.score + self.level * 100
-        self.level = self.level + 1
-        self.bombstep = self.bombstep + 3/self.level
-        self.length = self.length + 4000/self.level
-        self.dropInterval = self.dropInterval - 25/(self.level/4)
+        self._level = 1
+        self._bomb_step = 3
+        self._bomber_step = 5
+        self._score = 0
+        self._length = 8000
+        self._level_start = pygame.time.get_ticks()
+        self._drop_interval = 500
+        self._last_drop = 0
+    def level_up(self): #for use after all bombs are caught
+        self._score = self._score + self._level * 100
+        self._level = self._level + 1
+        self._bomb_step = self.bomb_step + BOMB_STEP_INCREMENT if self.bomb_step < MAX_BOMB_STEP
+        self._length = self.length + 4000/self.level
+        self._drop_interval = self.drop_interval - DROP_INTERVAL_DECREMENT
+    def wait_and_start(self):
         waitForClick()
-        self.levelStart = pygame.time.get_ticks()
-    def going(self): #returns false when no more bombs should be dropped
-        if pygame.time.get_ticks() > self.levelStart + self.length:
+        self._level_start = pygame.time.get_ticks()
+    def is_going(self): #returns false when no more bombs should be dropped
+        if pygame.time.get_ticks() > self._level_start + self._length:
             return False
         else:
             return True
-    def scoreUp(self): #adds score -- use when bomb is caught
+    def score_up(self): #adds score -- use when bomb is caught
         self.score = self.score + self.level*10
-    def restart(self):
-        self.score = self.score - 200
-        self.levelStart = pygame.time.get_ticks()
+    def should_drop():
+        if self._last_drop + self._drop_interval < pygame.time.get_ticks():
+            self._last_drop = pygame.time.get_ticks()
+            return True
+        else:
+            return False
+    def bomb_step(self):
+        return self._bomb_step
+    def bomber_step(self):
+        return self._bomber_step
+    def score(self):
+        return self._score
 
 
 
@@ -82,41 +106,26 @@ class Game:
         self.lastDrop = pygame.time.get_ticks()
         self.surf = DISPLAYSURF
     def moveAll(self):
-        self.bomber.move(self.level.bomberStep)
-        self.bomber.showOn(self.surf)
+        self.bomber.move(self.level.bomber_step)
         self.bucket.move()
-        self.bucket.showOn(self.surf)
         for index, bomb in enumerate(self.bombs):
-            bomb.move(self.level.bombStep)
-            bomb.showOn(self.surf)
-            if (self.touching(bomb, bucket)):
-                del self.bombs[index]
-                self.level.scoreUp()
-            elif bomb.img.hitbox[1] + bomb.posn()[1] > HEIGHT:
+            if bomb.move(self.level.bomb_step()) == CAUGHT:
+                self.level.score_up()
+                del bombs[index]
+            elif bomb.move(self.level.bomb_step()) == KABOOM:
+                #switch screen, delete bombs, and restart level and lose a bucket
                 self.kaboom()
+    
 
-    def touching(self, bom, buck):
-        if (abs(bom.center()[0] - buck.center()[0]) < bom.img.hitbox[0]/2 + buck.img.hitbox[0]/2) and (abs(bom.center()[1] - buck.center()[1]) < (bom.img.hitbox[1]/2 + buck.img.hitbox[1]/2)):
+    #add (drop) bomb?
+    #stop dropping?
+    #levelup
+    #lose a life / kaboom? -> restart level
+    #move them
+    #check for catches and drops
             
-            print("touching")
-            return True
-        else:
-            print("x: ", abs(bom.center()[0] - buck.center()[0]), " thresh:", bom.img.hitbox[0]/2 + buck.img.hitbox[0], "\ny: ", abs(bom.center()[1] - buck.center()[1]), " thresh: ",bom.img.hitbox[1]/2 + buck.img.hitbox[1]/2)
-            return False
-    def kaboom(self):
-        #lose a life, etc, then bomber.reset and levelRestart
-        self.bombs = []
-        self.bomber.reset()
-        waitForClick()
-        self.level.restart()
-    def drop(self):
-        self.bombs.append(Bomb(self.bomber))
-        self.lastDrop = pygame.time.get_ticks()
-    def update(self):
-        canDrop = self.level.going()
-        if canDrop and self.lastDrop + self.level.dropInterval < pygame.time.get_ticks():
-            self.drop()
-        self.moveAll()
+
+    
 
 
 
@@ -191,16 +200,6 @@ class Bomb:
     def showOn(self, surf):
         surf.blit(self.img.img, self.posn())
 
-def waitForClick():
-    cont = False
-    while cont == False:
-        for event in pygame.event.get():
-            if event.type == MOUSEBUTTONUP:
-                cont = True
-            if event.type==QUIT:
-                pygame.quit()
-                print("quit")
-                sys.exit()
 
 
 game = Game() 
