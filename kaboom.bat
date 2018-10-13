@@ -167,7 +167,6 @@ class Game:
         self.lives = self.lives - 1
         if self.lives == 0:
             print("lost")
-            
         self.bombs = []
         #change screen
         self.level.wait_and_start()
