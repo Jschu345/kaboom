@@ -1,6 +1,3 @@
-#hello there
-#Author: Jackson Schuster
-
 import pygame, sys, random
 import time
 from pygame.locals import *
@@ -11,16 +8,9 @@ print("began")
 
 
 pygame.init()
-wid, hei = pygame.display.Info().current_w, pygame.display.Info().current_h
-DISPLAYSURF = pygame.display.set_mode([WIDTH,HEIGHT])
+DISPLAYSURF = pygame.display.set_mode(SCREEN_SIZE)
 pygame.display.set_caption("Kaboom")
 clock = pygame.time.Clock()
-
-
-pygame.font.init() # you have to call this at the start,
-                   # if you want to use this module.
-myfont = pygame.font.SysFont('Comic Sans MS', 30)
-scoreSurf = myfont.render('Score', False, (0, 0, 0))
 
 
 def resetScreen():
@@ -41,19 +31,16 @@ def waitForClick():
 
 
 class Image:
-    def __init__(self, pygImg):
+    def __init__(self, pygImg, hitbox):
         self.img = pygImg
-        self.hitbox = self.img.get_rect().size
-        #self.hitbox = hitbox
+        self.hitbox = hitbox
 
 
 class Sprite:
-    def __init__(self, img, posn):
-        self._img = Image(img)
+    def __init__(self, img, hitbox, posn):
+        self._img = Image(img, hitbox)
         self._x = posn[0]
         self._y = posn[1]
-    def set_image(self, pygImg):
-        self._img = Image(pygImg)
     def posn(self):
         return [ self._x, self._y ]
     def center_of(self):
@@ -80,15 +67,15 @@ class Sprite:
 class Level:
     def __init__(self): #initialize
         self._level = 1
-        self._bomb_step = BOMB_STEP_START
-        self._bomber_step = BOMBER_STEP_START
+        self._bomb_step = 3
+        self._bomber_step = 5
         self._score = 0
-        self._length = LEVEL_LENGTH_START
+        self._length = 8000
         self._level_start = pygame.time.get_ticks()
-        self._drop_interval = DROP_INTERVAL_START
+        self._drop_interval = 500
         self._last_drop = 0
     def level_up(self): #for use after all bombs are caught
-        self._score = self._score + self._level * 20
+        self._score = self._score + self._level * 100
         self._level = self._level + 1
         self._bomb_step = self._bomb_step + BOMB_STEP_INCREMENT if self._bomb_step < MAX_BOMB_STEP else self._bomb_step
         self._bomber_step = self._bomber_step + BOMBER_STEP_INCREMENT if self._bomber_step < MAX_BOMBER_STEP else self._bomber_step
@@ -100,7 +87,7 @@ class Level:
     def is_going(self): #returns false when no more bombs should be dropped
         return pygame.time.get_ticks() < self._level_start + self._length
     def score_up(self): #adds score -- use when bomb is caught
-        self._score = self._score + self._level
+        self._score = self._score + self._level*10
     def should_drop(self):
         if self._last_drop + self._drop_interval < pygame.time.get_ticks():
             self._last_drop = pygame.time.get_ticks()
@@ -133,7 +120,6 @@ class Game:
         self.move_all()
         if self.level.is_going():
             self.drop()
-        self.update_score()
         self.update_screen()
         for event in pygame.event.get():
             if event.type == QUIT:
@@ -145,15 +131,11 @@ class Game:
             self.move_all()
             if self.level.is_going():
                 self.drop()
-            self.level.level_up()
-            self.update_score()
             self.update_screen()
+            self.level.level_up()
             self.level.wait_and_start()
 
 
-    def update_score(self):
-        scoreSurf = myfont.render(str(self.level.score()), False, (0, 0, 0))
-        DISPLAYSURF.blit(scoreSurf, [0,0])
     def update_screen(self):
         pygame.display.update()
     def move_all(self):
@@ -166,7 +148,6 @@ class Game:
         for index, bomb in enumerate(self.bombs):
             ret = bomb.move(self.level.bomb_step())
             if ret == KABOOM:
-                self.update_screen()
                 self.kaboom()
             elif bomb.is_touching(self.bucket):
                 self.level.score_up()
@@ -174,38 +155,23 @@ class Game:
         for i in to_delete:
             del self.bombs[i]
 
-
-
+            
+                
     def drop(self):
         if self.level.should_drop():
             self.bombs.append(Bomb(self.bomber.center_of()))
 
-    def explode_bombs(self):
-        for ind, bom in enumerate(self.bombs):
-            print("exploding")
-            bom.explode()
-            #del self.bombs[ind-1]
-            for bom2 in self.bombs:
-                bom2.show()
-            self.update_screen()
-            pygame.time.wait(200)
-
     def kaboom(self):
         print("kaboom")
-        self.explode_bombs()
-        print("exploded")
         self.bomber.reset()
         self.lives = self.lives - 1
         if self.lives == 0:
             print("lost")
-            pygame.quit()
-            sys.exit()
-        self.bucket.lose_bucket(self.lives)
         self.bombs = []
         #change screen
         self.level.wait_and_start()
         #lose life and restart level
-
+    
 
     #add (drop) bomb?
     #stop dropping?
@@ -213,12 +179,12 @@ class Game:
     #lose a life / kaboom? -> restart level
     #move them
     #check for catches and drops // do in Bomb.move()
-
+            
 
 
 class Bomber(Sprite):
     def __init__(self):
-        Sprite.__init__(self, pygame.image.load("img/bomber.png"), [int(WIDTH/2 - 32), SKY_HEIGHT - 48])
+        Sprite.__init__(self, pygame.image.load("img/bomber.png"), [20, 40], [int(WIDTH/2 - 32), SKY_HEIGHT - 48])
         self._nextx = int(random.randrange(32,WIDTH - 32))
     def reset(self):
         self._x = int(WIDTH/2 - 32)
@@ -236,49 +202,31 @@ class Bomber(Sprite):
 #bucket initialization
 class Bucket(Sprite):
     def __init__(self):
-        Sprite.__init__(self, pygame.image.load("img/3buckets.png"), [int(WIDTH/2), HEIGHT])
-        self.set_posn([int(WIDTH/2), HEIGHT - self._img.hitbox[1] - 15])
+        self._bucket_height = 16
+        Sprite.__init__(self, pygame.image.load("img/3buckets2.png"), [49,49], [int(WIDTH/2), HEIGHT - (5 + 4*self._bucket_height)])
         self._num_buckets = 3
-
+       
     def move(self):
-        ex, z = pygame.mouse.get_pos()
-
+        ex, z = pygame.mouse.get_pos() 
         self._x = ex - self._img.hitbox[0]/2
         self.show()
 
-    def lose_bucket(self, buckets):
-        print("losing bucket")
-        if (buckets == 2):
-            print("down to 2")
-            self.set_image(pygame.image.load("img/2buckets.png"))
-        elif (buckets == 1):
-            print("down to 1")
-            self.set_image(pygame.image.load("img/1bucket.png"))
-        self.show()
-
+    def loseBucket(self):
+        self._y = self._y + self._bucket_height
+        self._img.hitbox[1] = self._img.hitbox[1] -self._bucket_height
 
 
 
 #bombs initialization
-
 class Bomb(Sprite):
     def __init__(self, center):
-        Sprite.__init__(self, pygame.image.load("img/bomb.png"), [center[0], center[1]] )
+        Sprite.__init__(self, pygame.image.load("img/bomb.png"), [17,22], [center[0], center[1]] )
     def move(self, stp):
         self._y = self._y + stp
         if self._y + self.hitbox()[1] > HEIGHT:
             return KABOOM
         self.show()
-
-    def explode(self):
-        cent = self.center_of()
-        self.set_image(pygame.image.load("img/explodedBomb.png"))
-        self.set_center(cent)
-        self.show()
-        print("bomb exploding")
-
-
-
+        
 
 
 
@@ -292,6 +240,5 @@ while True: #main loop
             sys.exit()
     game.update()
     clock.tick(FPS)
-
 
 
