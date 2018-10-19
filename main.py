@@ -1,3 +1,6 @@
+#hello there
+#Author: Jackson Schuster
+
 import pygame, sys, random
 import time
 from pygame.locals import *
@@ -147,6 +150,7 @@ class Game:
             self.update_screen()
             self.level.wait_and_start()
 
+
     def update_score(self):
         scoreSurf = myfont.render(str(self.level.score()), False, (0, 0, 0))
         DISPLAYSURF.blit(scoreSurf, [0,0])
@@ -238,6 +242,7 @@ class Bucket(Sprite):
 
     def move(self):
         ex, z = pygame.mouse.get_pos()
+
         self._x = ex - self._img.hitbox[0]/2
         self.show()
 
@@ -253,7 +258,9 @@ class Bucket(Sprite):
 
 
 
+
 #bombs initialization
+
 class Bomb(Sprite):
     def __init__(self, center):
         Sprite.__init__(self, pygame.image.load("img/bomb.png"), [center[0], center[1]] )
@@ -274,6 +281,8 @@ class Bomb(Sprite):
 
 
 
+
+
 game = Game()
 while True: #main loop
     for event in pygame.event.get():
@@ -283,5 +292,6 @@ while True: #main loop
             sys.exit()
     game.update()
     clock.tick(FPS)
+
 
 
