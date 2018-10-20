@@ -49,8 +49,6 @@ class Sprite:
         self._img = Image(img)
         self._x = posn[0]
         self._y = posn[1]
-    def set_image(self, pygImg):
-        self._img = Image(pygImg)
     def posn(self):
         return [ self._x, self._y ]
     def center_of(self):
@@ -176,27 +174,14 @@ class Game:
         if self.level.should_drop():
             self.bombs.append(Bomb(self.bomber.center_of()))
 
-    def explode_bombs(self):
-        for ind, bom in enumerate(self.bombs):
-            print("exploding")
-            bom.explode()
-            #del self.bombs[ind-1]
-            for bom2 in self.bombs:
-                bom2.show()
-            self.update_screen()
-            pygame.time.wait(200)
-
     def kaboom(self):
         print("kaboom")
-        self.explode_bombs()
-        print("exploded")
         self.bomber.reset()
         self.lives = self.lives - 1
         if self.lives == 0:
             print("lost")
             pygame.quit()
             sys.exit()
-        self.bucket.lose_bucket(self.lives)
         self.bombs = []
         #change screen
         self.level.wait_and_start()
@@ -241,15 +226,8 @@ class Bucket(Sprite):
         self._x = ex - self._img.hitbox[0]/2
         self.show()
 
-    def lose_bucket(self, buckets):
-        print("losing bucket")
-        if (buckets == 2):
-            print("down to 2")
-            self.set_image(pygame.image.load("img/2buckets.png"))
-        elif (buckets == 1):
-            print("down to 1")
-            self.set_image(pygame.image.load("img/1bucket.png"))
-        self.show()
+    def loseBucket(self):
+        Sprite.__init__(self,  pygame.image.load("img/3buckets.png"), [int(WIDTH/2), HEIGHT])
 
 
 
@@ -262,13 +240,6 @@ class Bomb(Sprite):
         if self._y + self.hitbox()[1] > HEIGHT:
             return KABOOM
         self.show()
-
-    def explode(self):
-        cent = self.center_of()
-        self.set_image(pygame.image.load("img/explodedBomb.png"))
-        self.set_center(cent)
-        self.show()
-        print("bomb exploding")
 
 
 
